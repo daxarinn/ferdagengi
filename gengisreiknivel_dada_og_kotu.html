@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="is">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101114">
+<title>Gengisreiknivél Daða og Kötu</title>
+<style>
+*{box-sizing:border-box}:root{--bg:#101114;--card:#191b20;--card2:#25282f;--text:#f7f7f8;--muted:#989ca6;--accent:#ffca4b;--green:#55d98b;--line:rgba(255,255,255,.08)}
+html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -10%,#34302a 0,#17181c 35%,var(--bg) 70%);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100dvh;display:flex;justify-content:center;align-items:center;padding:22px}.app{width:min(100%,430px)}.header{text-align:center;margin-bottom:24px}.flags{font-size:30px;margin-bottom:7px}
+h1{margin:0;font-size:25px;letter-spacing:-.6px}.subtitle{margin-top:6px;color:var(--muted);font-size:14px}.currency-switch{display:grid;grid-template-columns:1fr 1fr;gap:5px;background:#090a0c;padding:5px;border-radius:16px;margin-bottom:14px}
+.currency-switch button{border:0;border-radius:12px;padding:13px;font-size:16px;font-weight:700;background:transparent;color:var(--muted);cursor:pointer}.currency-switch button.active{background:var(--card2);color:white;box-shadow:0 3px 12px rgba(0,0,0,.25)}
+.card{background:rgba(27,29,34,.97);border:1px solid var(--line);border-radius:25px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.35)}label{display:block;color:var(--muted);font-size:13px;font-weight:650;margin-bottom:8px}
+.input-wrap{position:relative}input[type=number]{width:100%;border:0;outline:0;background:#0d0e11;color:white;border-radius:17px;padding:18px 75px 18px 18px;font-size:34px;font-weight:750;letter-spacing:-.8px;font-variant-numeric:tabular-nums}
+input[type=number]:focus{box-shadow:0 0 0 2px var(--accent)}.currency{position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:19px;font-weight:800;color:var(--accent)}
+.arrow{text-align:center;color:var(--muted);font-size:25px;margin:14px 0 8px}.result-label{color:var(--muted);font-size:13px;font-weight:650}.result{margin-top:2px;font-size:clamp(38px,11vw,55px);font-weight:850;letter-spacing:-2px;line-height:1.1;color:var(--accent);word-break:break-word;font-variant-numeric:tabular-nums}.result small{font-size:.45em;letter-spacing:0;color:var(--text)}
+.rugl-row{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:15px}.rugl-title{font-size:15px;font-weight:750}.rugl-sub{color:var(--muted);font-size:12px;margin-top:3px}
+.toggle{position:relative;width:54px;height:31px;flex:0 0 auto;margin:0}.toggle input{opacity:0;width:0;height:0}.slider{position:absolute;inset:0;background:#3a3d45;border-radius:50px;cursor:pointer;transition:.2s}.slider:before{content:"";position:absolute;width:23px;height:23px;left:4px;top:4px;background:white;border-radius:50%;transition:.2s}.toggle input:checked+.slider{background:var(--green)}.toggle input:checked+.slider:before{transform:translateX(23px)}
+.rate{margin-top:17px;color:var(--muted);font-size:13px;line-height:1.6}.rate strong{color:#ddd}.footer{text-align:center;color:#656973;font-size:12px;margin-top:18px}
+</style></head>
+<body><main class="app">
+<header class="header"><div class="flags">🇹🇷 🇮🇸</div><h1>Gengisreiknivél Daða &amp; Kötu</h1><div class="subtitle">Hvað kostar þetta eiginlega? 😁</div></header>
+<div class="currency-switch"><button id="tryBtn" class="active" type="button">🇹🇷 Lírur</button><button id="eurBtn" type="button">🇪🇺 Evrur</button></div>
+<section class="card">
+<label id="inputLabel" for="amount">Verð í tyrkneskum lírum</label>
+<div class="input-wrap"><input id="amount" type="number" inputmode="decimal" autocomplete="off" placeholder="0" min="0" step="any"><span class="currency" id="currency">TL</span></div>
+<div class="arrow">↓</div><div class="result-label">Kostar sirka</div><div class="result" id="result">0 <small>kr.</small></div>
+<div class="rugl-row"><div><div class="rugl-title">🇹🇷 10% ruglálag 😵‍💫</div><div class="rugl-sub">Gengis-/kortaruglið hér úti</div></div><label class="toggle"><input id="ruglToggle" type="checkbox" checked><span class="slider"></span></label></div>
+<div class="rate" id="rateInfo"></div></section>
+<div class="footer">Ekki bókhald. Bara til að lifa af búðarrölt. ❤️</div>
+</main>
+<script>
+const TRY_BASE_RATE=2.50;
+const EUR_BASE_RATE=145;
+const RUGL_FACTOR=1.10;
+let mode="TRY";
+const amount=document.getElementById("amount"),result=document.getElementById("result"),currency=document.getElementById("currency"),inputLabel=document.getElementById("inputLabel"),rateInfo=document.getElementById("rateInfo"),ruglToggle=document.getElementById("ruglToggle"),tryBtn=document.getElementById("tryBtn"),eurBtn=document.getElementById("eurBtn");
+const iskFormatter=new Intl.NumberFormat("is-IS",{maximumFractionDigits:0});
+function getBaseRate(){return mode==="TRY"?TRY_BASE_RATE:EUR_BASE_RATE}
+function getRate(){const base=getBaseRate();return ruglToggle.checked?base*RUGL_FACTOR:base}
+function calculate(){const value=parseFloat(amount.value);if(!Number.isFinite(value)){result.innerHTML='0 <small>kr.</small>';updateRateInfo();return}result.innerHTML=iskFormatter.format(value*getRate())+' <small>kr.</small>';updateRateInfo()}
+function updateRateInfo(){const base=getBaseRate(),finalRate=getRate(),unit=mode==="TRY"?"TL":"€";rateInfo.innerHTML=ruglToggle.checked?`Grunngengi: <strong>1 ${unit} = ${base.toLocaleString("is-IS")} kr.</strong><br>Með 10% ruglálagi: <strong>1 ${unit} = ${finalRate.toLocaleString("is-IS",{maximumFractionDigits:2})} kr.</strong>`:`Grunngengi: <strong>1 ${unit} = ${base.toLocaleString("is-IS")} kr.</strong><br><strong>Ruglálag er OFF 👍</strong>`}
+function setMode(newMode){mode=newMode;const isTry=mode==="TRY";tryBtn.classList.toggle("active",isTry);eurBtn.classList.toggle("active",!isTry);currency.textContent=isTry?"TL":"€";inputLabel.textContent=isTry?"Verð í tyrkneskum lírum":"Verð í evrum";amount.value="";calculate();setTimeout(()=>amount.focus(),50)}
+amount.addEventListener("input",calculate);ruglToggle.addEventListener("change",calculate);tryBtn.addEventListener("click",()=>setMode("TRY"));eurBtn.addEventListener("click",()=>setMode("EUR"));
+window.addEventListener("load",()=>{ruglToggle.checked=true;setMode("TRY")});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)setTimeout(()=>amount.focus(),100)});
+</script></body></html>
