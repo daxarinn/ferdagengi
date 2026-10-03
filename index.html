@@ -21,6 +21,21 @@ input[type=number]:focus{box-shadow:0 0 0 2px var(--accent)}.currency{position:a
 .rugl-row{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:15px}.rugl-title{font-size:15px;font-weight:750}.rugl-sub{color:var(--muted);font-size:12px;margin-top:3px}
 .toggle{position:relative;width:54px;height:31px;flex:0 0 auto;margin:0}.toggle input{opacity:0;width:0;height:0}.slider{position:absolute;inset:0;background:#3a3d45;border-radius:50px;cursor:pointer;transition:.2s}.slider:before{content:"";position:absolute;width:23px;height:23px;left:4px;top:4px;background:white;border-radius:50%;transition:.2s}.toggle input:checked+.slider{background:var(--green)}.toggle input:checked+.slider:before{transform:translateX(23px)}
 .rate{margin-top:17px;color:var(--muted);font-size:13px;line-height:1.6}.rate strong{color:#ddd}.footer{text-align:center;color:#656973;font-size:12px;margin-top:18px}
+
+/* Compact keyboard mode: keep input + ISK result visible above mobile keyboard */
+body.keyboard-open{align-items:flex-start;padding-top:8px;padding-bottom:8px}
+body.keyboard-open .header{margin-bottom:7px}
+body.keyboard-open .flags,body.keyboard-open .subtitle{display:none}
+body.keyboard-open h1{font-size:17px}
+body.keyboard-open .currency-switch{margin-bottom:7px}
+body.keyboard-open .currency-switch button{padding:8px;font-size:14px}
+body.keyboard-open .card{padding:12px 15px;border-radius:19px}
+body.keyboard-open .card>label{margin-bottom:5px;font-size:11px}
+body.keyboard-open input[type=number]{padding:12px 65px 12px 14px;font-size:30px;border-radius:13px}
+body.keyboard-open .arrow{margin:4px 0 1px;font-size:18px;line-height:1}
+body.keyboard-open .result-label{font-size:11px}
+body.keyboard-open .result{font-size:40px;line-height:1}
+body.keyboard-open .rugl-row,body.keyboard-open .rate,body.keyboard-open .footer{display:none}
 </style></head>
 <body><main class="app">
 <header class="header"><div class="flags">🇹🇷 🇮🇸</div><h1>Gengisreiknivél Daða &amp; Kötu</h1><div class="subtitle">Hvað kostar þetta eiginlega? 😁</div></header>
@@ -48,6 +63,21 @@ function setMode(newMode){mode=newMode;const isTry=mode==="TRY";tryBtn.classList
 amount.addEventListener("input",calculate);ruglToggle.addEventListener("change",calculate);tryBtn.addEventListener("click",()=>setMode("TRY"));eurBtn.addEventListener("click",()=>setMode("EUR"));
 window.addEventListener("load",()=>{ruglToggle.checked=true;setMode("TRY")});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)setTimeout(()=>amount.focus(),100)});
+
+// Android shrinks the visual viewport when the on-screen keyboard opens.
+// Switch to a compact layout so the converted ISK value stays visible.
+function updateKeyboardMode(){
+  const vv=window.visualViewport;
+  if(!vv) return;
+  const keyboardOpen=(window.innerHeight-vv.height)>140 || vv.height<560;
+  document.body.classList.toggle("keyboard-open",keyboardOpen);
+}
+if(window.visualViewport){
+  visualViewport.addEventListener("resize",updateKeyboardMode);
+  visualViewport.addEventListener("scroll",updateKeyboardMode);
+}
+amount.addEventListener("focus",()=>setTimeout(updateKeyboardMode,100));
+amount.addEventListener("blur",()=>setTimeout(updateKeyboardMode,100));
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
